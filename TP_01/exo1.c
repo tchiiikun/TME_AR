@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+
 #define MASTER 0
 #define SIZE 128
 
