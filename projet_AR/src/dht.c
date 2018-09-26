@@ -104,7 +104,11 @@ int lookup(int *tab, int lookfor)
 		/*printf("2) %d Belongs to %d\n", k, tab[1]);*/
 		return 1;
 	}
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> 7c7259229280f7e079df756fd3935556cc817f98
 	for (; i<NB_SITES-1 && !(app(k, tab[i], tab[i+1])); i++);
 
 	if (k >= tab[NB_SITES-1]){
@@ -119,7 +123,10 @@ int lookup(int *tab, int lookfor)
 void simulateur(void)
 {
 	int i, j, k;
+<<<<<<< HEAD
 	int value, id, res;
+=======
+>>>>>>> 7c7259229280f7e079df756fd3935556cc817f98
 	MPI_Status status;
 	int* tab;
 	int tmp;
@@ -163,6 +170,7 @@ void simulateur(void)
 			MPI_Send(tabtmp, 3, MPI_INT, i+1, TAGINIT, MPI_COMM_WORLD);    
 		}
 	}
+<<<<<<< HEAD
 
 
 	id = (rand()) % 10+ 1;
@@ -186,14 +194,20 @@ void simulateur(void)
 		MPI_Send(&value, 1, MPI_INT, i+1, TAGINIT, MPI_COMM_WORLD);    
 	}
 
+=======
+>>>>>>> 7c7259229280f7e079df756fd3935556cc817f98
 	free(tabtmp);
 }
 
 void dht(int rang)
 {
 	int i, k;
+<<<<<<< HEAD
 	int tmp, dad;
 	int id, tmpid;
+=======
+	int id;
+>>>>>>> 7c7259229280f7e079df756fd3935556cc817f98
 	MPI_Status status;
 	int **finger_table;
 
@@ -204,6 +218,7 @@ void dht(int rang)
 
 	MPI_Recv(&id, 1, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD, &status);
 
+<<<<<<< HEAD
 	for (i=0; i<M; i++){
 		MPI_Recv(finger_table[i], 3, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD, &status);
 		/*printf("me:(%d|%d)		id=%d mpirank=%d pair=%d\n",*/
@@ -260,4 +275,18 @@ void dht(int rang)
 		printf("daddy killed me\n");
 		return;
 	}
+=======
+	for (i=0; i<3; i++){
+		MPI_Recv(finger_table[i], 3, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD, &status);
+		printf("me:(%d|%d)		id=%d mpirank=%d pair=%d\n",
+				rang, id,
+				finger_table[i][0],
+				finger_table[i][1],
+				finger_table[i][2]);
+	}
+
+	/* Traitement */
+
+	return;
+>>>>>>> 7c7259229280f7e079df756fd3935556cc817f98
 }
