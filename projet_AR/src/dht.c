@@ -104,7 +104,7 @@ int lookup(int *tab, int lookfor)
 		/*printf("2) %d Belongs to %d\n", k, tab[1]);*/
 		return 1;
 	}
-	
+
 	for (; i<NB_SITES-1 && !(app(k, tab[i], tab[i+1])); i++);
 
 	if (k >= tab[NB_SITES-1]){
@@ -119,6 +119,7 @@ int lookup(int *tab, int lookfor)
 void simulateur(void)
 {
 	int i, j, k;
+	int value, id, res;
 	MPI_Status status;
 	int* tab;
 	int tmp;
@@ -162,13 +163,37 @@ void simulateur(void)
 			MPI_Send(tabtmp, 3, MPI_INT, i+1, TAGINIT, MPI_COMM_WORLD);    
 		}
 	}
+
+
+	id = (rand()) % 10+ 1;
+	/*id = tab[tmp];*/
+
+	value = (rand()) %(1<<M)+ 1;
+	printf("first id to receive %d:%d will search :%d\n", id, tab[id], value);
+	/*printf("lookfor %d\n", value);*/
+
+	/* send request */
+	MPI_Send(&value, 1, MPI_INT, id, TAGINIT, MPI_COMM_WORLD);    
+
+	/* accept result */
+	MPI_Recv(&res, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+	printf("%d ---> %d\n", value, res);
+
+	/* finish */
+	/* broadcast the finish*/
+	value = 0;
+	for (i=0; i<NB_SITES; i++){
+		MPI_Send(&value, 1, MPI_INT, i+1, TAGINIT, MPI_COMM_WORLD);    
+	}
+
 	free(tabtmp);
 }
 
 void dht(int rang)
 {
 	int i, k;
-	int id;
+	int tmp, dad;
+	int id, tmpid;
 	MPI_Status status;
 	int **finger_table;
 
@@ -179,16 +204,60 @@ void dht(int rang)
 
 	MPI_Recv(&id, 1, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD, &status);
 
-	for (i=0; i<3; i++){
+	for (i=0; i<M; i++){
 		MPI_Recv(finger_table[i], 3, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD, &status);
-		printf("me:(%d|%d)		id=%d mpirank=%d pair=%d\n",
-				rang, id,
-				finger_table[i][0],
-				finger_table[i][1],
-				finger_table[i][2]);
+		/*printf("me:(%d|%d)		id=%d mpirank=%d pair=%d\n",*/
+				/*rang, id,*/
+				/*finger_table[i][0],*/
+				/*finger_table[i][1],*/
+				/*finger_table[i][2]);*/
 	}
 
-	/* Traitement */
+	/* Traitement requete */
+	MPI_Recv(&tmp, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+	dad = status.MPI_SOURCE;
 
-	return;
+	/* Recherche ? ou jump finish?*/
+	if (dad == 0){
+		/* finish? */
+		if (tmp == 0){
+			printf("daddy killed me\n");
+			return;
+		}
+		/* Recherche init */ 
+		printf("%d start search\n", id);
+		if (id >= tmp && finger_table[0][2] <= tmp){
+			//found
+			MPI_Send(0, 1, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD);    
+		}
+		for (i=1; i<M-1; i++){
+			printf("looking in table %d>%d? \n", tmp, finger_table[M-i][2]);
+			if (finger_table[M-i][2] < tmp){
+				printf("%d:sending %d at %d\n",i, tmp, finger_table[M-i][2]);
+				MPI_Send(&tmp, 1, MPI_INT, finger_table[M-i][1], TAGINIT, MPI_COMM_WORLD);    
+				break;
+			}
+		}
+	} else {
+		if (id >= tmp && finger_table[0][2] >= tmp){
+			//found
+			MPI_Send(&finger_table[0][2], 1, MPI_INT, 0, TAGINIT, MPI_COMM_WORLD);    
+		}
+		
+		for (i=1; i<M-1; i++){
+			printf("looking in table %d>%d? \n", tmp, finger_table[M-i][2]);
+			if (finger_table[M-i][2] < tmp){
+				printf("sending %d at %d\n",tmp, finger_table[M-i][2]);
+				MPI_Send(&tmp, 1, MPI_INT, finger_table[M-i][1], TAGINIT, MPI_COMM_WORLD);    
+				break;
+			}
+		}
+	}
+
+	/* finish */
+	MPI_Recv(&tmp, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+	if (tmp == 0){
+		printf("daddy killed me\n");
+		return;
+	}
 }
